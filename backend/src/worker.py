@@ -16,7 +16,9 @@ def execute(job_id):
         j.status='running'; db.commit()
         try:
             d=db.get(Dataset,j.dataset_id)
-            result=analyze(d.records,j.params)
+            # 优先使用发起时快照；兼容补报功能上线前创建的历史任务。
+            records=j.records_snapshot if j.records_snapshot else d.records
+            result=analyze(records,j.params)
             json.dumps(result,allow_nan=False)
             j.result=result;j.status='completed';j.finished_at=time.time()
             record(db,'worker','job.completed',{'id':j.id})
